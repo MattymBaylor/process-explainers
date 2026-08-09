@@ -1837,8 +1837,11 @@ var W_center = center.group.getWorldPosition(new THREE.Vector3());
 var W_escMid = W.agent.clone().add(W.human).multiplyScalar(0.5).add(new THREE.Vector3(0, 0.45, 0));
 
 /* ---------------- steps ---------------- */
-function off(id, dx, dy, dz, lx, ly, lz) {
-  var look = W[id].clone().add(new THREE.Vector3(lx || 0, ly || 0, lz || 0));
+function off(id, dx, dy, dz, blend) {
+  /* Framing rule: wide by default. Look point blends the active node toward the
+     board centre so the active panel is prominent but ~2/3 of the board stays in frame. */
+  var c = new THREE.Vector3(0.5, 0.05, 0);
+  var look = W[id].clone().lerp(c, blend === undefined ? 0.42 : blend);
   return { pos: look.clone().add(new THREE.Vector3(dx, dy, dz)), look: look };
 }
 var STEPS = [
@@ -1853,7 +1856,7 @@ var STEPS = [
   },
   {
     title: 'Step 1 · Inbound call',
-    cam: function () { return off('call', 0.9, 0.5, 7.2, 1.35, -0.25, 0); },
+    cam: function () { return off('call', 0.4, 0.55, 11.0); },
     nodes: { call: 'hero', agent: 'idle', crm: 'idle', sched: 'idle', follow: 'idle', human: 'idle' },
     edges: { in: 'hero', e0: 'idle', e1: 'idle', e2: 'idle', e3: 'idle', esc: 'idle' },
     center: 'ring', dwell: 5400,
@@ -1862,7 +1865,7 @@ var STEPS = [
   },
   {
     title: 'Step 2 · The agent converses',
-    cam: function () { return off('agent', 0.9, 0.45, 7.4, 1.4, -0.1, 0); },
+    cam: function () { return off('agent', 0.4, 0.5, 11.0); },
     nodes: { call: 'done', agent: 'hero', crm: 'idle', sched: 'idle', follow: 'idle', human: 'idle' },
     edges: { in: 'done', e0: 'hero', e1: 'idle', e2: 'idle', e3: 'idle', esc: 'idle' },
     center: 'wave', dwell: 5800,
@@ -1871,7 +1874,7 @@ var STEPS = [
   },
   {
     title: 'Step 3 · CRM lookup & update',
-    cam: function () { return off('crm', 0.9, 0.5, 7.2, 1.4, 0.05, 0); },
+    cam: function () { return off('crm', 0.4, 0.55, 11.0); },
     nodes: { call: 'done', agent: 'done', crm: 'hero', sched: 'idle', follow: 'idle', human: 'idle' },
     edges: { in: 'done', e0: 'done', e1: 'hero', e2: 'idle', e3: 'idle', esc: 'idle' },
     center: 'contact', dwell: 5600,
@@ -1880,7 +1883,7 @@ var STEPS = [
   },
   {
     title: 'Step 4 · Scheduler books the slot',
-    cam: function () { return off('sched', 0.9, 0.45, 7.2, 1.4, 0.3, 0); },
+    cam: function () { return off('sched', 0.4, 0.5, 11.0); },
     nodes: { call: 'done', agent: 'done', crm: 'done', sched: 'hero', follow: 'idle', human: 'idle' },
     edges: { in: 'done', e0: 'done', e1: 'done', e2: 'hero', e3: 'idle', esc: 'idle' },
     center: 'cal', dwell: 5600,
@@ -1889,7 +1892,7 @@ var STEPS = [
   },
   {
     title: 'Step 5 · Follow-up & logging',
-    cam: function () { return off('follow', 0.9, 0.6, 7.4, 1.4, 0.55, 0); },
+    cam: function () { return off('follow', 0.4, 0.65, 11.2); },
     nodes: { call: 'done', agent: 'done', crm: 'done', sched: 'done', follow: 'success', human: 'idle' },
     edges: { in: 'done', e0: 'done', e1: 'done', e2: 'done', e3: 'hero', esc: 'idle' },
     center: 'sent', dwell: 5600,
@@ -1898,7 +1901,7 @@ var STEPS = [
   },
   {
     title: 'The exception · warm transfer',
-    cam: function () { return { pos: W_escMid.clone().add(new THREE.Vector3(0.5, 1.5, 9.6)), look: W_escMid.clone().add(new THREE.Vector3(0, -0.35, 0)) }; },
+    cam: function () { return { pos: W_escMid.clone().add(new THREE.Vector3(0.5, 1.4, 11.2)), look: W_escMid.clone().add(new THREE.Vector3(0, -0.35, 0)) }; },
     nodes: { call: 'done', agent: 'alert', crm: 'done', sched: 'done', follow: 'done', human: 'hero' },
     edges: { in: 'done', e0: 'done', e1: 'done', e2: 'done', e3: 'done', esc: 'alert' },
     center: 'handoff', dwell: 6600,

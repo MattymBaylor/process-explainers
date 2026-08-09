@@ -22,13 +22,26 @@
   .card.hide { display: none; }
 </style></head><body>
   <h1>Process Explainers</h1>
-  <p class="sub">0 interactive models of complex processes</p>
+  <p class="sub">1 interactive model of complex processes</p>
   <div class="filters">
     <button class="on" data-tag="">all</button>
-
+    <button data-tag="asgi">asgi</button>
+    <button data-tag="fastapi">fastapi</button>
+    <button data-tag="http">http</button>
+    <button data-tag="pydantic">pydantic</button>
+    <button data-tag="python">python</button>
+    <button data-tag="uvicorn">uvicorn</button>
+    <button data-tag="web">web</button>
+    <button data-tag="web-frameworks">web-frameworks</button>
   </div>
   <div class="grid">
 
+    <a class="card" href="explainers/fastapi-request-flow/index.html" data-tags="web fastapi python asgi uvicorn pydantic http web-frameworks">
+      <span class="cat">web</span>
+      <h2>FastAPI Request Flow: Client to Response</h2>
+      <p>How an HTTP request travels through uvicorn, FastAPI routing, dependency injection, Pydantic validation, the path-operation function, and back out as a serialized JSON response.</p>
+      <footer>svg-waapi · 2026-08-08</footer>
+    </a>
   </div>
 <script>
   document.querySelector('.filters').addEventListener('click', e => {

@@ -1,5 +1,28 @@
 {
   "generated": true,
-  "count": 0,
-  "explainers": []
+  "count": 1,
+  "explainers": [
+    {
+      "title": "FastAPI Request Flow: Client to Response",
+      "slug": "fastapi-request-flow",
+      "summary": "How an HTTP request travels through uvicorn, FastAPI routing, dependency injection, Pydantic validation, the path-operation function, and back out as a serialized JSON response.",
+      "category": "web",
+      "tags": [
+        "fastapi",
+        "python",
+        "asgi",
+        "uvicorn",
+        "pydantic",
+        "http",
+        "web-frameworks"
+      ],
+      "format": "svg-waapi",
+      "modes": [
+        "architect",
+        "engineer"
+      ],
+      "date": "2026-08-08",
+      "status": "published"
+    }
+  ]
 }

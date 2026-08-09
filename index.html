@@ -22,15 +22,22 @@
   .card.hide { display: none; }
 </style></head><body>
   <h1>Process Explainers</h1>
-  <p class="sub">1 interactive model of complex processes</p>
+  <p class="sub">2 interactive models of complex processes</p>
   <div class="filters">
     <button class="on" data-tag="">all</button>
+    <button data-tag="ai-agents">ai-agents</button>
     <button data-tag="asgi">asgi</button>
+    <button data-tag="crm">crm</button>
     <button data-tag="fastapi">fastapi</button>
     <button data-tag="http">http</button>
     <button data-tag="pydantic">pydantic</button>
     <button data-tag="python">python</button>
+    <button data-tag="scheduling">scheduling</button>
+    <button data-tag="telephony">telephony</button>
+    <button data-tag="threejs">threejs</button>
     <button data-tag="uvicorn">uvicorn</button>
+    <button data-tag="voice-ai">voice-ai</button>
+    <button data-tag="warm-transfer">warm-transfer</button>
     <button data-tag="web">web</button>
     <button data-tag="web-frameworks">web-frameworks</button>
   </div>
@@ -41,6 +48,13 @@
       <h2>FastAPI Request Flow: Client to Response</h2>
       <p>How an HTTP request travels through uvicorn, FastAPI routing, dependency injection, Pydantic validation, the path-operation function, and back out as a serialized JSON response.</p>
       <footer>svg-waapi · 2026-08-08</footer>
+    </a>
+
+    <a class="card" href="explainers/voice-agent-call-flow-3d/index.html" data-tags="ai-agents voice-ai ai-agents telephony crm scheduling warm-transfer threejs">
+      <span class="cat">ai-agents</span>
+      <h2>AI Voice Agent: Inbound Call Flow (3D)</h2>
+      <p>How an AI voice agent handles an inbound business call end to end — real-time conversation, CRM lookup and update, scheduling, confirmation and logging — with a warm-transfer escalation branch to a human when a request is out of scope.</p>
+      <footer>threejs · 2026-08-08</footer>
     </a>
   </div>
 <script>

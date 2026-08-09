@@ -1,6 +1,6 @@
 {
   "generated": true,
-  "count": 1,
+  "count": 2,
   "explainers": [
     {
       "title": "FastAPI Request Flow: Client to Response",
@@ -17,6 +17,28 @@
         "web-frameworks"
       ],
       "format": "svg-waapi",
+      "modes": [
+        "architect",
+        "engineer"
+      ],
+      "date": "2026-08-08",
+      "status": "published"
+    },
+    {
+      "title": "AI Voice Agent: Inbound Call Flow (3D)",
+      "slug": "voice-agent-call-flow-3d",
+      "summary": "How an AI voice agent handles an inbound business call end to end — real-time conversation, CRM lookup and update, scheduling, confirmation and logging — with a warm-transfer escalation branch to a human when a request is out of scope.",
+      "category": "ai-agents",
+      "tags": [
+        "voice-ai",
+        "ai-agents",
+        "telephony",
+        "crm",
+        "scheduling",
+        "warm-transfer",
+        "threejs"
+      ],
+      "format": "threejs",
       "modes": [
         "architect",
         "engineer"

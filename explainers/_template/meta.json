@@ -1,0 +1,11 @@
+{
+  "title": "Explainer Title",
+  "slug": "explainer-slug",
+  "summary": "One-sentence description of the process being explained.",
+  "category": "ai-agents",
+  "tags": ["example", "template"],
+  "format": "svg-waapi",
+  "modes": ["architect", "engineer"],
+  "date": "2026-01-01",
+  "status": "draft"
+}

@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Process Explainers</title>
+<style>
+  :root { color-scheme: light dark; --fg: #1a1a1a; --bg: #fafafa; --card: #fff; --line: #e2e2e2; --dim: #666; }
+  @media (prefers-color-scheme: dark) { :root { --fg: #e8e8e8; --bg: #131313; --card: #1d1d1d; --line: #333; --dim: #999; } }
+  * { box-sizing: border-box; margin: 0; }
+  body { font: 16px/1.5 system-ui, sans-serif; color: var(--fg); background: var(--bg); padding: 2rem 1rem; max-width: 64rem; margin: auto; }
+  h1 { font-size: 1.6rem; margin-bottom: .25rem; }
+  .sub { color: var(--dim); margin-bottom: 1.5rem; }
+  .filters { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: 1.5rem; }
+  .filters button { font: inherit; font-size: .8rem; padding: .2rem .7rem; border: 1px solid var(--line); border-radius: 99px; background: var(--card); color: var(--fg); cursor: pointer; }
+  .filters button.on { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); gap: 1rem; }
+  .card { display: block; padding: 1rem; background: var(--card); border: 1px solid var(--line); border-radius: .6rem; text-decoration: none; color: inherit; }
+  .card:hover { border-color: var(--dim); }
+  .card h2 { font-size: 1.05rem; margin: .3rem 0; }
+  .card p { font-size: .88rem; color: var(--dim); }
+  .card .cat { font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; color: var(--dim); }
+  .card footer { margin-top: .6rem; font-size: .75rem; color: var(--dim); }
+  .card.hide { display: none; }
+</style></head><body>
+  <h1>Process Explainers</h1>
+  <p class="sub">0 interactive models of complex processes</p>
+  <div class="filters">
+    <button class="on" data-tag="">all</button>
+
+  </div>
+  <div class="grid">
+
+  </div>
+<script>
+  document.querySelector('.filters').addEventListener('click', e => {
+    const btn = e.target.closest('button'); if (!btn) return;
+    document.querySelectorAll('.filters button').forEach(b => b.classList.toggle('on', b === btn));
+    const tag = btn.dataset.tag;
+    document.querySelectorAll('.card').forEach(c =>
+      c.classList.toggle('hide', tag && !c.dataset.tags.split(' ').includes(tag)));
+  });
+</script>
+</body></html>

@@ -216,9 +216,20 @@
     to   { offset-distance: 100%; opacity: 0; }
   }
 
+  /* Controls pared to Play + Restart; stepping lives in arrow keys,
+     the step list, and node clicks. Elements stay for JS wiring. */
+  #btn-back, #btn-fwd { display: none; }
   @media (max-width: 980px) {
     .layout { grid-template-columns: 1fr; }
     aside { flex-direction: column-reverse; }
+  }
+  /* Small screens: keep diagram text legible — the stage becomes a horizontal
+     pan container and the SVG holds a minimum drawable width. */
+  @media (max-width: 700px) {
+    .stage { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .stage svg { min-width: 720px; }
+    .stage::after { content: 'swipe to pan \2194'; display: block; text-align: center;
+      font: 500 11px Poppins, Arial, sans-serif; color: var(--dim); padding-top: .4rem; }
   }
 </style>
 </head>

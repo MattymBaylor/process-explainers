@@ -109,6 +109,20 @@ body { background: var(--bg); }
 #nar .fade { transition: opacity .28s ease; }
 #nar.swap .fade { opacity: 0; }
 
+/* engineer annotations — rendered in the panel, never floating in-scene */
+#n-annot { display: none; margin-top: .65rem; border-top: 1px solid var(--line); padding-top: .6rem; }
+body[data-mode="engineer"] #n-annot.has { display: block; }
+#n-annot .a { font-family: var(--font-head); font-size: .68rem; line-height: 1.55; color: var(--dim); margin-top: .28rem; }
+#n-annot .a b { color: var(--accent-2); font-weight: 600; }
+#n-annot .a.alert b { color: var(--error); }
+#n-ref { display: none; margin-top: .65rem; border-top: 1px solid var(--line); padding-top: .6rem; }
+body[data-mode="engineer"] #n-ref { display: block; }
+#n-ref .rk { font-family: var(--font-head); font-size: .64rem; font-weight: 600; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--dim); }
+#n-ref .bars { display: flex; align-items: flex-end; gap: .3rem; height: 2rem; margin-top: .45rem; }
+#n-ref .bars i { flex: 1; background: #35543f; border-radius: 2px 2px 0 0; }
+#n-ref .bars i.hero { background: var(--accent-2); }
+
 /* controls */
 #ctl { left: 50%; transform: translateX(-50%); bottom: 1.1rem; display: flex; align-items: center;
   gap: .35rem; padding: .5rem .7rem; }
@@ -161,6 +175,11 @@ body { background: var(--bg); }
   <div class="k fade" id="n-k">Step 1 of 8</div>
   <h2 class="fade" id="n-title"></h2>
   <p class="fade" id="n-text"></p>
+  <div class="fade" id="n-annot"></div>
+  <div id="n-ref">
+    <div class="rk">Session metrics</div>
+    <div class="bars" aria-hidden="true"><i style="height:36%"></i><i style="height:56%"></i><i style="height:44%"></i><i style="height:76%"></i><i style="height:64%"></i><i class="hero" style="height:92%"></i><i style="height:80%"></i><i style="height:100%"></i></div>
+  </div>
 </aside>
 
 <footer id="ctl" class="hud glass">
@@ -1837,17 +1856,35 @@ var W_center = center.group.getWorldPosition(new THREE.Vector3());
 var W_escMid = W.agent.clone().add(W.human).multiplyScalar(0.5).add(new THREE.Vector3(0, 0.45, 0));
 
 /* ---------------- steps ---------------- */
-function off(id, dx, dy, dz, blend) {
-  /* Framing rule: wide by default. Look point blends the active node toward the
-     board centre so the active panel is prominent but ~2/3 of the board stays in frame. */
-  var c = new THREE.Vector3(0.5, 0.05, 0);
-  var look = W[id].clone().lerp(c, blend === undefined ? 0.42 : blend);
-  return { pos: look.clone().add(new THREE.Vector3(dx, dy, dz)), look: look };
+/* Framing rule — the whole board, always. Every scene is a straight-on,
+   full-board frame: the camera sits on the board's normal axis so the board
+   reads "screen straight on", and only the look target drifts a fraction
+   toward the active zone (≤15% distance change between scenes). Emphasis
+   comes from glow, lighting and particles — never from diving in. */
+var B_Q = board.quaternion.clone();
+var B_RIGHT = new THREE.Vector3(1, 0, 0).applyQuaternion(B_Q);
+var B_UP = new THREE.Vector3(0, 1, 0).applyQuaternion(B_Q);
+var B_NORM = new THREE.Vector3(0, 0, 1).applyQuaternion(B_Q);
+var B_CENTER = new THREE.Vector3(0.5, 0.05, 0).applyQuaternion(B_Q).add(board.position);
+camera.up.copy(B_UP);
+camera.lookAt(curLook);
+function frontCam(dist, driftX, driftY) {
+  var look = B_CENTER.clone().addScaledVector(B_RIGHT, driftX || 0).addScaledVector(B_UP, driftY || 0);
+  return { pos: look.clone().addScaledVector(B_NORM, dist), look: look };
+}
+function drift(target, dist) {
+  /* look-target drift toward the active zone — clamped so the board never leaves frame */
+  var p = typeof target === 'string' ? W[target] : target;
+  var v = p.clone().sub(B_CENTER);
+  var x = Math.max(-1.0, Math.min(1.0, v.dot(B_RIGHT) * 0.22));
+  var y = Math.max(-0.5, Math.min(0.5, v.dot(B_UP) * 0.22));
+  return frontCam(dist, x, y);
 }
 var STEPS = [
   {
     title: 'One call, end to end',
-    cam: function () { return { pos: new THREE.Vector3(0.6, 0.9, 12.2), look: new THREE.Vector3(0.5, 0.1, 0) }; },
+    /* opening move ends here: boot glides from the tilted establishing view to this straight-on full-board frame */
+    cam: function () { return frontCam(12.2); },
     nodes: { call: 'idle', agent: 'idle', crm: 'idle', sched: 'idle', follow: 'idle', human: 'idle' },
     edges: { in: 'hidden', e0: 'idle', e1: 'idle', e2: 'idle', e3: 'idle', esc: 'idle' },
     center: 'phone', dwell: 6200,
@@ -1856,7 +1893,7 @@ var STEPS = [
   },
   {
     title: 'Step 1 · Inbound call',
-    cam: function () { return off('call', 0.4, 0.55, 11.0); },
+    cam: function () { return drift('call', 12.5); },
     nodes: { call: 'hero', agent: 'idle', crm: 'idle', sched: 'idle', follow: 'idle', human: 'idle' },
     edges: { in: 'hero', e0: 'idle', e1: 'idle', e2: 'idle', e3: 'idle', esc: 'idle' },
     center: 'ring', dwell: 5400,
@@ -1865,7 +1902,7 @@ var STEPS = [
   },
   {
     title: 'Step 2 · The agent converses',
-    cam: function () { return off('agent', 0.4, 0.5, 11.0); },
+    cam: function () { return drift('agent', 12.4); },
     nodes: { call: 'done', agent: 'hero', crm: 'idle', sched: 'idle', follow: 'idle', human: 'idle' },
     edges: { in: 'done', e0: 'hero', e1: 'idle', e2: 'idle', e3: 'idle', esc: 'idle' },
     center: 'wave', dwell: 5800,
@@ -1874,7 +1911,7 @@ var STEPS = [
   },
   {
     title: 'Step 3 · CRM lookup & update',
-    cam: function () { return off('crm', 0.4, 0.55, 11.0); },
+    cam: function () { return drift('crm', 12.5); },
     nodes: { call: 'done', agent: 'done', crm: 'hero', sched: 'idle', follow: 'idle', human: 'idle' },
     edges: { in: 'done', e0: 'done', e1: 'hero', e2: 'idle', e3: 'idle', esc: 'idle' },
     center: 'contact', dwell: 5600,
@@ -1883,7 +1920,7 @@ var STEPS = [
   },
   {
     title: 'Step 4 · Scheduler books the slot',
-    cam: function () { return off('sched', 0.4, 0.5, 11.0); },
+    cam: function () { return drift('sched', 12.4); },
     nodes: { call: 'done', agent: 'done', crm: 'done', sched: 'hero', follow: 'idle', human: 'idle' },
     edges: { in: 'done', e0: 'done', e1: 'done', e2: 'hero', e3: 'idle', esc: 'idle' },
     center: 'cal', dwell: 5600,
@@ -1892,7 +1929,7 @@ var STEPS = [
   },
   {
     title: 'Step 5 · Follow-up & logging',
-    cam: function () { return off('follow', 0.4, 0.65, 11.2); },
+    cam: function () { return drift('follow', 12.5); },
     nodes: { call: 'done', agent: 'done', crm: 'done', sched: 'done', follow: 'success', human: 'idle' },
     edges: { in: 'done', e0: 'done', e1: 'done', e2: 'done', e3: 'hero', esc: 'idle' },
     center: 'sent', dwell: 5600,
@@ -1901,7 +1938,7 @@ var STEPS = [
   },
   {
     title: 'The exception · warm transfer',
-    cam: function () { return { pos: W_escMid.clone().add(new THREE.Vector3(0.5, 1.4, 11.2)), look: W_escMid.clone().add(new THREE.Vector3(0, -0.35, 0)) }; },
+    cam: function () { return drift(W_escMid, 12.6); },
     nodes: { call: 'done', agent: 'alert', crm: 'done', sched: 'done', follow: 'done', human: 'hero' },
     edges: { in: 'done', e0: 'done', e1: 'done', e2: 'done', e3: 'done', esc: 'alert' },
     center: 'handoff', dwell: 6600,
@@ -1910,7 +1947,7 @@ var STEPS = [
   },
   {
     title: 'Why it holds',
-    cam: function () { return { pos: new THREE.Vector3(-0.8, 1.15, 12.8), look: new THREE.Vector3(0.5, 0.05, 0) }; },
+    cam: function () { return frontCam(12.8); },
     nodes: { call: 'done', agent: 'done', crm: 'done', sched: 'done', follow: 'success', human: 'done' },
     edges: { in: 'done', e0: 'done', e1: 'done', e2: 'done', e3: 'done', esc: 'idle' },
     center: 'done', dwell: 6200,
@@ -1964,10 +2001,39 @@ function swapNarration() {
   setTimeout(function () { renderUI(); el.nar.classList.remove('swap'); }, 200);
 }
 
+/* Engineer mode must not crowd the frame: floating plaques are illegible at
+   whole-board camera distance, so the ACTIVE step's annotations render in the
+   narration panel instead, and the in-scene plaques and the analytics board
+   stay hidden (the metrics live in the panel's reference section below). */
+var elAnnot = document.getElementById('n-annot');
+function updateAnnotations() {
+  Object.keys(nodes).forEach(function (id) { nodes[id].detail.visible = false; });
+  analytics.visible = false;
+  elAnnot.textContent = '';
+  if (current >= 0) {
+    var step = STEPS[current];
+    Object.keys(nodes).forEach(function (id) {
+      var st = step.nodes[id];
+      if (st !== 'hero' && st !== 'alert' && st !== 'success') return;
+      var def = nodes[id].def;
+      if (!def.detail) return;
+      var row = document.createElement('div');
+      row.className = st === 'alert' ? 'a alert' : 'a';
+      var b = document.createElement('b');
+      b.textContent = def.title;
+      row.appendChild(b);
+      row.appendChild(document.createTextNode(' — ' + def.detail[0] + ' · ' + def.detail[1]));
+      elAnnot.appendChild(row);
+    });
+  }
+  elAnnot.classList.toggle('has', elAnnot.childNodes.length > 0);
+}
+
 function applyStates(step, instant) {
   Object.keys(step.nodes).forEach(function (id) { setNodeState(id, step.nodes[id], instant); });
   Object.keys(step.edges).forEach(function (id) { setEdgeState(id, step.edges[id]); });
   center.set(step.center);
+  updateAnnotations();
 }
 
 function goTo(i, instant) {
@@ -2027,9 +2093,7 @@ function setMode(m) {
   mEng.classList.toggle('on', m === 'engineer');
   mArch.setAttribute('aria-selected', String(m === 'architect'));
   mEng.setAttribute('aria-selected', String(m === 'engineer'));
-  var eng = m === 'engineer';
-  Object.keys(nodes).forEach(function (id) { nodes[id].detail.visible = eng; });
-  analytics.visible = eng;
+  updateAnnotations();
   swapNarration();
 }
 mArch.addEventListener('click', function () { setMode('architect'); });
@@ -2113,6 +2177,18 @@ window.addEventListener('pagehide', function () {
   renderer.dispose();
 });
 
+/* debug/verification hook (mirrors the maximus explainer's __mx) */
+window.__vx = {
+  goTo: goTo, play: play, pause: pause, setMode: setMode,
+  get current() { return current; },
+  get playing() { return playing; },
+  get clock() { return clock; },
+  get tween() { return !!tween; },
+  advanceClock: function (s) { clock += s; },
+  cam: function () { return camera.position.toArray().concat(curLook.toArray()); },
+  steps: STEPS.length
+};
+
 /* ---------------- boot: wait for embedded fonts, then show step 0 ---------------- */
 var booted = false;
 function boot() {
@@ -2128,7 +2204,8 @@ function boot() {
     });
     n.label.needsUpdate = true;
   });
-  goTo(0, true);
+  /* opening move: hold the tilted establishing view, then glide to the straight-on full-board frame */
+  goTo(0, REDUCED);
   playing = true;      // ready to run; autoplay advances after the opening dwell
   renderUI();
   requestAnimationFrame(frame);

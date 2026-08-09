@@ -113,6 +113,20 @@ body { background: var(--bg); }
 #nar .fade { transition: opacity .28s ease; }
 #nar.swap .fade { opacity: 0; }
 
+/* engineer annotations — rendered in the panel, never floating in-scene */
+#n-annot { display: none; margin-top: .65rem; border-top: 1px solid var(--line); padding-top: .6rem; }
+body[data-mode="engineer"] #n-annot.has { display: block; }
+#n-annot .a { font-family: var(--font-head); font-size: .68rem; line-height: 1.55; color: var(--dim); margin-top: .28rem; }
+#n-annot .a b { color: var(--accent); font-weight: 600; }
+#n-annot .a.alert b { color: var(--error); }
+#n-ref { display: none; margin-top: .65rem; border-top: 1px solid var(--line); padding-top: .6rem; }
+body[data-mode="engineer"] #n-ref { display: block; }
+#n-ref details { margin-top: .3rem; }
+#n-ref summary { font-family: var(--font-head); font-size: .64rem; font-weight: 600; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--dim); cursor: pointer; }
+#n-ref p { font-family: var(--font-head); font-size: .66rem; line-height: 1.6; color: #8f8d84; margin-top: .25rem; }
+#n-ref b { color: var(--accent); font-weight: 600; }
+
 /* controls */
 #ctl { left: 50%; transform: translateX(-50%); bottom: 1.1rem; display: flex; align-items: center;
   gap: .35rem; padding: .5rem .7rem; }
@@ -165,6 +179,18 @@ body { background: var(--bg); }
   <div class="k fade" id="n-k">Scene 01 / 10</div>
   <h2 class="fade" id="n-title"></h2>
   <p class="fade" id="n-text"></p>
+  <div class="fade" id="n-annot"></div>
+  <div id="n-ref">
+    <details>
+      <summary>MaximusState</summary>
+      <p>raw input &middot; Claude verdicts &middot; bookkeeping &mdash; never opinions</p>
+      <p><b>identity</b> dict &mdash; loaded once at init, cached &middot; <b>learned_rules</b> list &mdash; loaded FIRST, outranks all &middot; <b>inbound / band</b> Inbound | None &middot; Literal[1,2,3,4] &middot; <b>voice_tier</b> "A".."E" | None &mdash; or fail closed &middot; <b>draft / memory_hits</b> str | None &middot; list[Note] &middot; <b>open_questions</b> list &mdash; surface as Y/N in the brief &middot; <b>decisions</b> list &mdash; written to the memory graph</p>
+    </details>
+    <details>
+      <summary>Authority — top down</summary>
+      <p>rules/LEARNED-RULES.md &rarr; MAXIMUS.md hard boundaries &rarr; identity/00&ndash;09 &rarr; model priors</p>
+    </details>
+  </div>
 </aside>
 
 <footer id="ctl" class="hud glass">
@@ -2132,9 +2158,28 @@ Object.keys(nodes).forEach(function (id) {
 });
 
 /* ---------------- steps ---------------- */
-function off(id, dx, dy, dz, lx, ly, lz) {
-  var look = W[id].clone().add(new THREE.Vector3(lx || 0, ly || 0, lz || 0));
-  return { pos: look.clone().add(new THREE.Vector3(dx, dy, dz)), look: look };
+/* Framing rule — the whole board, always. Every scene is a straight-on,
+   full-board frame: the camera sits on the board's normal axis so the board
+   reads "screen straight on", and only the look target drifts a fraction
+   toward the active zone (≤15% distance change between scenes). Emphasis
+   comes from glow, lighting and particles — never from diving in. */
+var B_Q = board.quaternion.clone();
+var B_RIGHT = new THREE.Vector3(1, 0, 0).applyQuaternion(B_Q);
+var B_UP = new THREE.Vector3(0, 1, 0).applyQuaternion(B_Q);
+var B_NORM = new THREE.Vector3(0, 0, 1).applyQuaternion(B_Q);
+var B_CENTER = new THREE.Vector3(-0.1, 0.15, 0).applyQuaternion(B_Q).add(board.position);
+camera.up.copy(B_UP);
+camera.lookAt(curLook);
+function frontCam(dist, driftX, driftY) {
+  var look = B_CENTER.clone().addScaledVector(B_RIGHT, driftX || 0).addScaledVector(B_UP, driftY || 0);
+  return { pos: look.clone().addScaledVector(B_NORM, dist), look: look };
+}
+function drift(id, dist) {
+  /* look-target drift toward the active zone — clamped so the board never leaves frame */
+  var v = W[id].clone().sub(B_CENTER);
+  var x = Math.max(-1.1, Math.min(1.1, v.dot(B_RIGHT) * 0.22));
+  var y = Math.max(-0.5, Math.min(0.5, v.dot(B_UP) * 0.22));
+  return frontCam(dist, x, y);
 }
 var ALL_NODES = Object.keys(nodes);
 var ALL_EDGES = [];
@@ -2142,7 +2187,8 @@ var ALL_EDGES = [];
 var STEPS = [
   { /* 1 */
     title: 'The body plan',
-    cam: function () { return { pos: new THREE.Vector3(0.4, 0.7, 14.4), look: new THREE.Vector3(0.2, 0.1, 0) }; },
+    /* opening move ends here: boot glides from the tilted establishing view to this straight-on full-board frame */
+    cam: function () { return frontCam(14.6); },
     n: {}, e: {},
     center: 'body', dwell: 6600,
     arch: 'Five zones, one organism. Claude is the brain — every judgment call happens there. LangGraph is the nervous system that runs the graphs. The connector layer is the hands — the only part that touches the outside world. Qdrant plus markdown is the memory. And Postgres is the spine: durable state that survives restarts. Press play, or drag to orbit.',
@@ -2150,7 +2196,7 @@ var STEPS = [
   },
   { /* 2 */
     title: 'Mail arrives',
-    cam: function () { return off('mail', 1.6, 0.3, 12.6, 2.3, -0.9, 0); },
+    cam: function () { return drift('mail', 15.0); },
     n: { mail: 'hero', spine: 'hero' },
     e: { ein: 'hero', es1: 'hero' },
     center: 'mail', dwell: 5600,
@@ -2159,7 +2205,7 @@ var STEPS = [
   },
   { /* 3 */
     title: 'Classify — the brain decides',
-    cam: function () { return off('classify', 1.3, 0.5, 12.6, 1.9, 0.5, 0); },
+    cam: function () { return drift('classify', 14.8); },
     n: { classify: 'hero', claude: 'hero', mail: 'done', spine: 'done' },
     e: { e1: 'hero', ec1: 'hero', ein: 'done', es1: 'done' },
     center: 'band', dwell: 6200,
@@ -2168,7 +2214,7 @@ var STEPS = [
   },
   { /* 4 */
     title: 'Memory recall',
-    cam: function () { return off('qdrant', -1.5, -0.4, 12.6, -2.4, -0.9, 0); },
+    cam: function () { return drift('qdrant', 15.0); },
     n: { qdrant: 'hero', notes: 'hero', mail: 'done', spine: 'done', classify: 'done', claude: 'done' },
     e: { em1: 'hero', em2: 'hero', ein: 'done', e1: 'done', ec1: 'done', es1: 'done' },
     center: 'recall', dwell: 5800,
@@ -2177,7 +2223,7 @@ var STEPS = [
   },
   { /* 5 */
     title: 'Voice tier — or fail closed',
-    cam: function () { return off('voice', 0.5, 0.1, 12.2, 0.4, -0.3, 0); },
+    cam: function () { return drift('voice', 14.7); },
     n: { voice: 'hero', approval: 'alert', mail: 'done', spine: 'done', classify: 'done', claude: 'done', qdrant: 'done', notes: 'done' },
     e: { e2: 'hero', ef: 'alert', ein: 'done', e1: 'done', ec1: 'done', es1: 'done', em1: 'done', em2: 'done' },
     center: 'tier', dwell: 6400,
@@ -2186,7 +2232,7 @@ var STEPS = [
   },
   { /* 6 */
     title: 'Draft — in his voice',
-    cam: function () { return off('draft', 1.2, 0.5, 12.4, 1.9, 0.8, 0); },
+    cam: function () { return drift('draft', 14.9); },
     n: { draft: 'hero', claude: 'hero', mail: 'done', spine: 'done', classify: 'done', qdrant: 'done', notes: 'done', voice: 'done' },
     e: { e3: 'hero', ec3: 'hero', em3: 'hero', ein: 'done', e1: 'done', ec1: 'done', es1: 'done', em1: 'done', em2: 'done', e2: 'done' },
     center: 'draft', dwell: 5800,
@@ -2195,7 +2241,7 @@ var STEPS = [
   },
   { /* 7 */
     title: 'Nothing sends',
-    cam: function () { return off('brief', 1.3, 0.4, 12.2, 2.1, 0.3, 0); },
+    cam: function () { return drift('brief', 14.8); },
     n: { brief: 'hero', mail: 'done', spine: 'done', classify: 'done', claude: 'done', qdrant: 'done', notes: 'done', voice: 'done', draft: 'done' },
     e: { e4: 'hero', ein: 'done', e1: 'done', ec1: 'done', es1: 'done', em1: 'done', em2: 'done', e2: 'done', e3: 'done', ec3: 'done', em3: 'done' },
     center: 'queue', dwell: 6000,
@@ -2204,7 +2250,7 @@ var STEPS = [
   },
   { /* 8 */
     title: 'He answers S — one door out',
-    cam: function () { return off('egress', 1.7, 0.7, 12.8, 2.6, 0.7, 0); },
+    cam: function () { return drift('egress', 15.1); },
     n: { egress: 'hero', spine: 'hero', brief: 'done', mail: 'done', classify: 'done', claude: 'done', qdrant: 'done', notes: 'done', voice: 'done', draft: 'done' },
     e: { es2: 'hero', e5: 'hero', e6: 'hero', ein: 'done', e1: 'done', ec1: 'done', es1: 'done', em1: 'done', em2: 'done', e2: 'done', e3: 'done', ec3: 'done', em3: 'done', e4: 'done' },
     center: 'send', dwell: 6000,
@@ -2213,7 +2259,7 @@ var STEPS = [
   },
   { /* 9 */
     title: 'Overnight digestion',
-    cam: function () { return off('consol', -1.4, 0.3, 12.8, -2.3, 0.5, 0); },
+    cam: function () { return drift('consol', 15.0); },
     n: { consol: 'hero', qdrant: 'success', notes: 'success', egress: 'done', spine: 'done', brief: 'done', mail: 'done', classify: 'done', claude: 'done', voice: 'done', draft: 'done' },
     e: { eg1: 'hero', eg2: 'hero', eg3: 'hero', ein: 'done', e1: 'done', ec1: 'done', es1: 'done', em1: 'done', em2: 'done', e2: 'done', e3: 'done', ec3: 'done', em3: 'done', e4: 'done', es2: 'done', e5: 'done', e6: 'done' },
     center: 'consol', dwell: 6200,
@@ -2222,7 +2268,7 @@ var STEPS = [
   },
   { /* 10 */
     title: 'The flywheel',
-    cam: function () { return { pos: new THREE.Vector3(0.1, 1.3, 16.6), look: new THREE.Vector3(0.2, 0.2, 0) }; },
+    cam: function () { return frontCam(16.4); },
     n: { claude: 'hero', qdrant: 'success', mail: 'done', spine: 'done', classify: 'done', notes: 'done', voice: 'done', draft: 'done', brief: 'done', egress: 'done', consol: 'done' },
     e: { efly: 'hero', ein: 'done', e1: 'done', ec1: 'done', es1: 'done', em1: 'done', em2: 'done', e2: 'done', e3: 'done', ec3: 'done', em3: 'done', e4: 'done', es2: 'done', e5: 'done', e6: 'done', eg1: 'done', eg2: 'done', eg3: 'done' },
     center: 'fly', dwell: 7200,
@@ -2277,10 +2323,40 @@ function swapNarration() {
   setTimeout(function () { renderUI(); el.nar.classList.remove('swap'); }, 200);
 }
 
+/* Engineer mode must not crowd the frame: floating plaques are illegible at
+   whole-board camera distance, so the ACTIVE step's annotations render in the
+   narration panel instead, and the in-scene plaques and reference boards stay
+   hidden (their content lives in the panel's reference section below). */
+var elAnnot = document.getElementById('n-annot');
+function updateAnnotations() {
+  ALL_NODES.forEach(function (id) { nodes[id].detail.visible = false; });
+  statePanel.mesh.visible = false;
+  precPanel.mesh.visible = false;
+  elAnnot.textContent = '';
+  if (current >= 0) {
+    var step = STEPS[current];
+    ALL_NODES.forEach(function (id) {
+      var st = step.n[id];
+      if (st !== 'hero' && st !== 'alert' && st !== 'success') return;
+      var def = nodes[id].def;
+      if (!def.detail) return;
+      var row = document.createElement('div');
+      row.className = st === 'alert' ? 'a alert' : 'a';
+      var b = document.createElement('b');
+      b.textContent = def.title;
+      row.appendChild(b);
+      row.appendChild(document.createTextNode(' — ' + def.detail[0] + ' · ' + def.detail[1]));
+      elAnnot.appendChild(row);
+    });
+  }
+  elAnnot.classList.toggle('has', elAnnot.childNodes.length > 0);
+}
+
 function applyStates(step, instant) {
   ALL_NODES.forEach(function (id) { setNodeState(id, step.n[id] || 'idle', instant); });
   ALL_EDGES.forEach(function (id) { setEdgeState(id, step.e[id] || (edges[id].def.hidden ? 'hidden' : 'idle')); });
   center.set(step.center);
+  updateAnnotations();
 }
 
 function goTo(i, instant) {
@@ -2340,10 +2416,7 @@ function setMode(m) {
   mEng.classList.toggle('on', m === 'engineer');
   mArch.setAttribute('aria-selected', String(m === 'architect'));
   mEng.setAttribute('aria-selected', String(m === 'engineer'));
-  var eng = m === 'engineer';
-  ALL_NODES.forEach(function (id) { nodes[id].detail.visible = eng; });
-  statePanel.mesh.visible = eng;
-  precPanel.mesh.visible = eng;
+  updateAnnotations();
   swapNarration();
 }
 mArch.addEventListener('click', function () { setMode('architect'); });
@@ -2462,7 +2535,8 @@ function boot() {
   statePanel.mat.map = track(drawStateTexture()); statePanel.mat.needsUpdate = true;
   precPanel.mat.map = track(drawPrecTexture()); precPanel.mat.needsUpdate = true;
   center.flush();
-  goTo(0, true);
+  /* opening move: hold the tilted establishing view, then glide to the straight-on full-board frame */
+  goTo(0, REDUCED);
   playing = true;
   renderUI();
   requestAnimationFrame(frame);

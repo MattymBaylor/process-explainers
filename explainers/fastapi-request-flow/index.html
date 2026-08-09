@@ -57,10 +57,14 @@
     --line: #2b2b2b;       /* hairlines on any elevation */
     --text: #faf9f5;
     --muted: #b0aea5;      /* secondary text, idle edges */
-    --accent: #00d4ff;     /* GMS blue — PRIMARY: active step, drawn edges, focus */
-    --success: #6eaa82;    /* GMS sage green — particles, annotations, success/200 OK */
-    --success-text: #7fbc93; /* same color role, bumped for small-text legibility */
+    --accent: #00d4ff;     /* GMS blue — PRIMARY and only state color */
     --error: #c05b4d;      /* 422 validation-failure branch only */
+    --trail: rgba(255,255,255,.75); /* white return/tracking lines + orbs */
+    /* node states (brand.css): base lifts off black with a whisper of white;
+       active = translucent blue wash over the whole card; past steps dim to base */
+    --glow-card: 0 0 14px rgba(255,255,255,.05);
+    --active-fill: rgba(0,212,255,.14);
+    --active-stroke: var(--accent);
     --font-head: 'Poppins', Arial, sans-serif;   /* headings, buttons, labels */
     --font-body: 'Lora', Georgia, serif;         /* narration, step text */
     font-size: 16px;
@@ -134,8 +138,7 @@
 
   /* Progress */
   .progress { height: 4px; background: var(--panel-2); border-radius: 2px; margin: .65rem .35rem 0; overflow: hidden; }
-  .progress > div { height: 100%; width: 0; background: var(--accent); border-radius: 2px; transition: width .3s ease, background .3s ease; }
-  .complete #progress-fill { background: var(--success); }
+  .progress > div { height: 100%; width: 0; background: var(--accent); border-radius: 2px; transition: width .3s ease; }
 
   /* Side panel */
   aside { display: flex; flex-direction: column; gap: 1rem; }
@@ -145,7 +148,7 @@
   .narration .step-count { font-size: .72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
   .narration h2 { font-size: 1.02rem; margin: .3rem 0 .5rem; }
   .narration .text { font-size: .88rem; color: #d6d6d3; }
-  .narration .text code { color: var(--text); font-size: .92em; background: rgba(110,170,130,.12); padding: .05em .3em; border-radius: 4px; }
+  .narration .text code { color: var(--text); font-size: .92em; background: rgba(255,255,255,.08); padding: .05em .3em; border-radius: 4px; }
   .steplist h3 { font-size: .75rem; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-bottom: .55rem; }
   .steplist ol { list-style: none; display: flex; flex-direction: column; gap: 2px; }
   .steplist button {
@@ -156,18 +159,28 @@
   .steplist button:hover { background: var(--panel-2); color: var(--text); }
   .steplist button .num { font-size: .7rem; color: var(--muted); width: 1.1em; }
   .steplist li.done button { color: #c6c6c3; }
-  .steplist li.done button .num { color: var(--success); }
+  .steplist li.done button .num { color: var(--muted); }
   .steplist li.current button { background: var(--panel-2); color: var(--text); font-weight: 600; }
   .steplist li.current button .num { color: var(--accent); }
 
   /* ---------- SVG ---------- */
-  .node rect { fill: var(--panel-2); stroke: var(--line); stroke-width: 1.4; }
+  .node rect {
+    fill: var(--panel-2); stroke: var(--line); stroke-width: 1.4;
+    filter: drop-shadow(var(--glow-card));
+    transition: fill .45s ease, stroke .45s ease, filter .45s ease;
+  }
   .node text.title { fill: var(--text); font-size: 14px; font-weight: 600; }
   .node text.sub { fill: var(--muted); font-size: 10.5px; }
   .node { transform-box: fill-box; transform-origin: center; cursor: pointer; }
   svg text { font-family: var(--font-head); }
-  .node.visited rect { stroke: var(--success); }
-  .node.active rect { stroke: var(--accent); stroke-width: 2; filter: drop-shadow(0 0 7px rgba(0,212,255,.45)); }
+  /* active: --active-fill wash layered over the base fill (flattened via color-mix
+     so the card body stays opaque over whatever elevation it sits on);
+     when the step passes, the transition above dims it back to base — no visited color */
+  .node.active rect {
+    fill: color-mix(in srgb, #00d4ff 14%, var(--elev-3));
+    stroke: var(--active-stroke); stroke-width: 2;
+    filter: drop-shadow(0 0 10px rgba(0,212,255,.35));
+  }
   .node.active text.title { fill: #ffffff; }
 
   .zone-server { fill: var(--elev-1); stroke: var(--line); stroke-width: 1; }
@@ -175,10 +188,10 @@
   .app-label, .zone-label { fill: var(--muted); font-size: 11px; font-weight: 650; text-transform: uppercase; letter-spacing: .1em; }
 
   .edge { fill: none; stroke: var(--accent); stroke-width: 2.2; stroke-linecap: round; }
-  .edge.resp { stroke: var(--success); }
+  .edge.resp { stroke: var(--trail); }
   .edge.err { stroke: var(--error); stroke-width: 1.8; stroke-dasharray: 5 4; opacity: 0; }
   .arrow { fill: var(--accent); opacity: 0; }
-  .arrow.resp { fill: var(--success); }
+  .arrow.resp { fill: var(--trail); }
   .arrow.err { fill: var(--error); }
 
   .edge-label { font-size: 10.5px; fill: var(--muted); }
@@ -191,9 +204,7 @@
   [data-mode="engineer"] .arch-only { display: none; }
 
   /* Particles — visible only once the round trip completes */
-  .particle { opacity: 0; r: 4; }
-  .particle.req { fill: var(--success); }
-  .particle.resp-p { fill: var(--success); }
+  .particle { opacity: 0; r: 3.4; fill: #ffffff; filter: drop-shadow(0 0 5px rgba(255,255,255,.65)); }
   @supports (offset-path: path("M0,0 L1,1")) {
     .complete .particle { opacity: 1; animation: flow 1.7s linear infinite; }
     .complete .particle.resp-p { animation-delay: .85s; }
@@ -472,7 +483,7 @@
       title: 'Client receives the response',
       node: 'n-client', edges: ['e-resp'],
       narr: {
-        architect: 'Uvicorn writes the HTTP response to the socket. The client receives <code>200 OK</code> with the JSON payload &mdash; the round trip is complete. Particles trace the request (teal) and response (amber) paths.',
+        architect: 'Uvicorn writes the HTTP response to the socket. The client receives <code>200 OK</code> with the JSON payload &mdash; the round trip is complete. Glowing white orbs trace the completed round trip along the tracking lines.',
         engineer: 'Uvicorn writes the status line, headers (<code>content-length</code>, <code>content-type: application/json</code>), and body to the socket, keeping the connection alive for reuse. Teardown of <code>yield</code> dependencies (e.g. closing the DB session) runs after the response is sent.'
       }
     }

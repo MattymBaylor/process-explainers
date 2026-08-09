@@ -1,0 +1,11 @@
+{
+  "title": "MAXIMUS — A Digital Twin, End to End",
+  "slug": "maximus-digital-twin",
+  "summary": "One inbound email traced through a personal digital-twin AI — Claude as the brain, LangGraph as the nervous system, one egress door, Qdrant + markdown memory, and a Postgres spine — from webhook to the three-weeks-later flywheel where memory surfaces itself unprompted.",
+  "category": "ai-agents",
+  "tags": ["digital-twin", "langgraph", "claude", "memory-graph"],
+  "format": "threejs",
+  "modes": ["architect", "engineer"],
+  "date": "2026-08-09",
+  "status": "published"
+}

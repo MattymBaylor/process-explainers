@@ -22,14 +22,18 @@
   .card.hide { display: none; }
 </style></head><body>
   <h1>Process Explainers</h1>
-  <p class="sub">2 interactive models of complex processes</p>
+  <p class="sub">3 interactive models of complex processes</p>
   <div class="filters">
     <button class="on" data-tag="">all</button>
     <button data-tag="ai-agents">ai-agents</button>
     <button data-tag="asgi">asgi</button>
+    <button data-tag="claude">claude</button>
     <button data-tag="crm">crm</button>
+    <button data-tag="digital-twin">digital-twin</button>
     <button data-tag="fastapi">fastapi</button>
     <button data-tag="http">http</button>
+    <button data-tag="langgraph">langgraph</button>
+    <button data-tag="memory-graph">memory-graph</button>
     <button data-tag="pydantic">pydantic</button>
     <button data-tag="python">python</button>
     <button data-tag="scheduling">scheduling</button>
@@ -42,6 +46,13 @@
     <button data-tag="web-frameworks">web-frameworks</button>
   </div>
   <div class="grid">
+
+    <a class="card" href="explainers/maximus-digital-twin/index.html" data-tags="ai-agents digital-twin langgraph claude memory-graph">
+      <span class="cat">ai-agents</span>
+      <h2>MAXIMUS — A Digital Twin, End to End</h2>
+      <p>One inbound email traced through a personal digital-twin AI — Claude as the brain, LangGraph as the nervous system, one egress door, Qdrant + markdown memory, and a Postgres spine — from webhook to the three-weeks-later flywheel where memory surfaces itself unprompted.</p>
+      <footer>threejs · 2026-08-09</footer>
+    </a>
 
     <a class="card" href="explainers/fastapi-request-flow/index.html" data-tags="web fastapi python asgi uvicorn pydantic http web-frameworks">
       <span class="cat">web</span>
